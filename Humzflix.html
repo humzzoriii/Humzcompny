@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HUMZFLIX</title>
+
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;height:100%}
+body{font-family:Arial;background:#000;color:#fff}
+
+/* PASSWORD */
+#pwGate{position:fixed;inset:0;background:radial-gradient(circle,#220000,#000);
+display:flex;align-items:center;justify-content:center;z-index:9000}
+.pw-card{width:320px;padding:28px;border-radius:18px;
+background:rgba(0,0,0,.7);box-shadow:0 0 40px #e50914;text-align:center}
+.pw-card h2{color:#e50914;margin:0}
+.pw-card input,.pw-card button{width:100%;padding:14px;margin-top:14px;
+border-radius:12px;border:none}
+.pw-card input{background:#111;color:#e50914;text-align:center}
+.pw-card button{background:#e50914;color:#fff;font-weight:bold;cursor:pointer}
+.pw-error{color:#ff5f5f;font-size:13px;display:none}
+
+/* INTRO */
+#intro{position:fixed;inset:0;background:radial-gradient(circle,#111,#000);
+display:flex;align-items:center;justify-content:center;z-index:8000;opacity:0}
+#logo{font-size:clamp(36px,10vw,64px);font-weight:bold;color:#e50914;
+letter-spacing:4px;animation:zoom 2.5s ease forwards,glow 2s infinite alternate}
+@keyframes zoom{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes glow{from{text-shadow:0 0 10px #e50914}
+to{text-shadow:0 0 30px #ff2a2a}}
+
+/* UI */
+header{padding:20px;font-size:26px;color:#e50914}
+#controls{display:flex;gap:10px;padding:0 20px;flex-wrap:wrap}
+input,select{padding:8px;border-radius:6px;border:none}
+#movies{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+gap:15px;padding:20px}
+.card{position:relative;cursor:pointer}
+.card img{width:100%;border-radius:8px}
+.hover{position:absolute;inset:0;background:rgba(0,0,0,.85);opacity:0;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+transition:.3s}
+.card:hover .hover{opacity:1}
+
+/* PLAYER */
+#player{position:fixed;inset:0;background:rgba(0,0,0,.9);
+display:none;align-items:center;justify-content:center;z-index:5000}
+#player iframe{width:min(90vw,960px);height:min(50vw,540px)}
+</style>
+</head>
+
+<body>
+
+<!-- PASSWORD -->
+<div id="pwGate">
+  <div class="pw-card">
+    <h2>HUMZFLIX</h2>
+    <input id="pw" type="password" placeholder="Password" autofocus>
+    <button onclick="login()">ENTER</button>
+    <div id="pwErr" class="pw-error">Password salah</div>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div id="intro"><div id="logo">HUMZFLIX</div></div>
+
+<header>HUMZFLIX</header>
+
+<div id="controls">
+  <input id="search" placeholder="Cari film...">
+  <select id="category">
+    <option value="action">Action</option>
+    <option value="horror">Horror</option>
+    <option value="anime">Anime</option>
+  </select>
+  <select id="durationFilter">
+    <option value="all">Semua Durasi</option>
+    <option value="short">Pendek (&lt;20m)</option>
+    <option value="medium">Sedang (20–60m)</option>
+    <option value="long">Panjang (&gt;60m)</option>
+  </select>
+</div>
+
+<div id="movies"></div>
+
+<div id="player" onclick="closePlayer()">
+  <iframe id="ytplayer" allowfullscreen></iframe>
+</div>
+
+<audio id="logoSound" src="logo.mp3"></audio>
+<audio id="bgAction" src="action.mp3" loop></audio>
+<audio id="bgHorror" src="horror.mp3" loop></audio>
+<audio id="bgAnime" src="anime.mp3" loop></audio>
+
+<script>
+/* ================= API ================= */
+const API_KEY="AIzaSyAA5mAYNQMgpAv0XiN3N-9fK1vhU5pKvjA";
+
+/* ================= ADMIN CHECK ================= */
+const ADMIN_USERS=["Humam","Hilal"];
+const currentUser=localStorage.getItem("humz_user");
+const isAdmin=ADMIN_USERS.includes(currentUser);
+
+/* ================= PASSWORD ================= */
+const PASSWORD="flix123";
+
+if(isAdmin){
+  pwGate.style.display="none";
+  startIntro();
+}
+
+pw.addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+pw.addEventListener("input",()=>pwErr.style.display="none");
+
+function login(){
+  if(pw.value===PASSWORD){
+    pwGate.style.display="none";
+    startIntro();
+  }else pwErr.style.display="block";
+}
+
+/* ================= AUDIO ================= */
+const bgm={action:bgAction,horror:bgHorror,anime:bgAnime};
+let currentBGM=null;
+function stopAll(){
+  Object.values(bgm).forEach(a=>{a.pause();a.currentTime=0});
+}
+function playBGM(cat){
+  stopAll();
+  currentBGM=bgm[cat];
+  currentBGM.volume=0.35;
+  currentBGM.play().catch(()=>{});
+}
+
+/* ================= INTRO ================= */
+function startIntro(){
+  intro.style.opacity=1;
+  logoSound.volume=0.6;
+  logoSound.play().catch(()=>{});
+  setTimeout(()=>{
+    intro.style.display="none";
+    playBGM(category.value);
+    loadMovies(true);
+  },3000);
+}
+
+/* ================= DURATION ================= */
+let selectedDuration="all";
+function parseISO(d){
+  let m=d.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  return (+(m[1]||0))*3600+(+(m[2]||0))*60+(+(m[3]||0));
+}
+
+/* ================= MOVIES ================= */
+async function loadMovies(reset=false){
+  if(reset) movies.innerHTML="";
+  let q=search.value||category.value+" movie";
+
+  let r=await fetch(
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=9&q=${q}&key=${API_KEY}`
+  );
+  let d=await r.json();
+
+  for(let v of d.items){
+    let id=v.id.videoId;
+    let vr=await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${id}&key=${API_KEY}`
+    );
+    let vd=await vr.json();
+    if(!vd.items.length)continue;
+
+    let sec=parseISO(vd.items[0].contentDetails.duration);
+    if(selectedDuration==="short"&&sec>=1200)continue;
+    if(selectedDuration==="medium"&&(sec<1200||sec>3600))continue;
+    if(selectedDuration==="long"&&sec<=3600)continue;
+
+    let div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+      <img src="${v.snippet.thumbnails.medium.url}">
+      <div class="hover">
+        <b>${v.snippet.title}</b>
+        <button onclick="play('${id}')">▶ Play</button>
+      </div>`;
+    movies.appendChild(div);
+  }
+}
+
+/* ================= PLAYER ================= */
+function play(id){
+  if(currentBGM) currentBGM.pause();
+  player.style.display="flex";
+  ytplayer.src=`https://www.youtube.com/embed/${id}?autoplay=1`;
+}
+function closePlayer(){
+  player.style.display="none";
+  ytplayer.src="";
+  if(currentBGM) currentBGM.play();
+}
+
+/* ================= EVENTS ================= */
+category.onchange=()=>{playBGM(category.value);loadMovies(true)};
+durationFilter.onchange=()=>{selectedDuration=durationFilter.value;loadMovies(true)};
+search.onchange=()=>loadMovies(true);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Humz Trailer</title>
+
+<style>
+:root{
+  --bg:#0f0f0f;
+  --card:#1c1c1c;
+  --accent:#e50914;
+  --text:#ffffff;
+  --muted:#aaaaaa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:system-ui, Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+/* PASSWORD */
+#pwGate{
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle,#220000,#000);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+.pw-box{
+  background:rgba(0,0,0,.7);
+  padding:28px;
+  width:320px;
+  border-radius:16px;
+  text-align:center;
+  box-shadow:0 0 35px var(--accent);
+}
+.pw-box h2{color:var(--accent);margin-bottom:15px}
+.pw-box input{
+  width:100%;padding:14px;border-radius:10px;border:none;
+  outline:none;background:#111;color:white;text-align:center;
+}
+.pw-box button{
+  width:100%;margin-top:12px;padding:14px;border-radius:10px;
+  border:none;background:var(--accent);color:white;font-weight:bold;cursor:pointer;
+}
+.pw-error{margin-top:10px;color:#ff5f5f;font-size:13px;display:none}
+
+/* HEADER */
+header{padding:20px;text-align:center}
+header h1{font-size:clamp(1.5rem,4vw,2.2rem);margin-bottom:15px}
+
+/* SEARCH */
+.search-box{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+input{
+  padding:12px 15px;
+  width:clamp(200px,60vw,320px);
+  border-radius:8px;border:none;outline:none;
+}
+button{
+  padding:12px 18px;border-radius:8px;border:none;
+  background:var(--accent);color:white;font-weight:600;cursor:pointer;
+}
+button:hover{opacity:.9}
+
+/* RESULTS */
+#results{
+  padding:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:15px;
+}
+
+/* CARD */
+.movie{
+  background:var(--card);
+  border-radius:10px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:.2s;
+}
+.movie:hover{
+  transform:translateY(-5px);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+.movie img{
+  width:100%;
+  aspect-ratio:2/3;
+  object-fit:cover;
+}
+.movie-info{padding:10px}
+.movie h3{font-size:14px}
+.movie p{font-size:12px;color:var(--muted)}
+
+/* MODAL */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  z-index:999;
+}
+.modal-content{
+  position:relative;
+  width:90%;
+  max-width:900px;
+  margin:10vh auto;
+}
+.close{
+  position:absolute;
+  top:-35px;
+  right:0;
+  font-size:32px;
+  cursor:pointer;
+}
+.video-wrapper{
+  position:relative;
+  padding-top:56.25%;
+  background:black;
+  border-radius:10px;
+  overflow:hidden;
+}
+iframe{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- PASSWORD -->
+<div id="pwGate">
+  <div class="pw-box">
+    <h2>Humz Trailer</h2>
+    <input type="password" id="pw" placeholder="Masukkan password" autofocus>
+    <button onclick="login()">ENTER</button>
+    <div id="pwErr" class="pw-error">Password salah</div>
+  </div>
+</div>
+
+<header>
+  <h1>Humz Trailer</h1>
+  <div class="search-box">
+    <input type="text" id="movieInput" placeholder="Cari trailer film...">
+    <button id="searchBtn">Search</button>
+  </div>
+</header>
+
+<div id="results"></div>
+
+<div id="trailerModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div class="video-wrapper">
+      <iframe id="trailerFrame" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== ADMIN CHECK ===== */
+const ADMIN_USERS=["Humam","Hilal"];
+const currentUser=localStorage.getItem("humz_user");
+const isAdmin=ADMIN_USERS.includes(currentUser);
+
+/* ===== PASSWORD ===== */
+const PASSWORD="trailer123";
+const pw=document.getElementById("pw");
+const pwGate=document.getElementById("pwGate");
+const pwErr=document.getElementById("pwErr");
+
+if(isAdmin){
+  pwGate.style.display="none";
+}
+
+pw.addEventListener("keydown",e=>{
+  if(e.key==="Enter") login();
+});
+
+function login(){
+  if(pw.value===PASSWORD){
+    pwGate.style.display="none";
+  }else{
+    pwErr.style.display="block";
+  }
+}
+
+/* ===== API ===== */
+const omdbApiKey="fb3411de";
+const youtubeApiKey="AIzaSyDYgrXCi1yhxi59GTU7BKtsU4_y1yum670";
+
+const searchBtn=document.getElementById("searchBtn");
+const movieInput=document.getElementById("movieInput");
+const results=document.getElementById("results");
+const modal=document.getElementById("trailerModal");
+const trailerFrame=document.getElementById("trailerFrame");
+const closeBtn=document.querySelector(".close");
+
+async function getTrailerUrl(title){
+  const q=encodeURIComponent(title+" trailer");
+  const url=`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${q}&key=${youtubeApiKey}`;
+  const res=await fetch(url);
+  const data=await res.json();
+  return data.items?.length
+    ? `https://www.youtube.com/embed/${data.items[0].id.videoId}?autoplay=1`
+    : null;
+}
+
+searchBtn.onclick=async()=>{
+  const q=movieInput.value.trim();
+  if(!q) return alert("Judulnya mana bro 😭");
+
+  results.innerHTML="Loading...";
+
+  const res=await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(q)}&apikey=${omdbApiKey}`);
+  const data=await res.json();
+  results.innerHTML="";
+
+  if(!data.Search){
+    results.innerHTML="Film ga ketemu.";
+    return;
+  }
+
+  for(const m of data.Search){
+    const dRes=await fetch(`https://www.omdbapi.com/?i=${m.imdbID}&apikey=${omdbApiKey}`);
+    const d=await dRes.json();
+
+    const div=document.createElement("div");
+    div.className="movie";
+    div.innerHTML=`
+      <img src="${d.Poster!=="N/A"?d.Poster:"https://via.placeholder.com/300x450"}">
+      <div class="movie-info">
+        <h3>${d.Title}</h3>
+        <p>${d.Year} • ${d.Genre}</p>
+      </div>
+    `;
+
+    div.onclick=async()=>{
+      const url=await getTrailerUrl(d.Title);
+      if(url){
+        trailerFrame.src=url;
+        modal.style.display="block";
+      }else alert("Trailer gak ada 😢");
+    };
+
+    results.appendChild(div);
+  }
+};
+
+closeBtn.onclick=()=>{
+  trailerFrame.src="";
+  modal.style.display="none";
+};
+
+window.onclick=e=>{
+  if(e.target===modal){
+    trailerFrame.src="";
+    modal.style.display="none";
+  }
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choose your destination</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:radial-gradient(circle at top, #001f3f, #000);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    overflow:hidden;
+    transition:.6s;
+}
+
+/* ===== START SCREEN ===== */
+.start-screen{
+    position:fixed;
+    inset:0;
+    background:black;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+    cursor:pointer;
+}
+
+.start-screen h1{
+    font-size:clamp(20px,6vw,28px);
+    letter-spacing:2px;
+    animation:blink 1.2s infinite;
+    text-align:center;
+}
+
+@keyframes blink{
+    0%,100%{opacity:1}
+    50%{opacity:.4}
+}
+
+/* ===== MAIN ===== */
+.portal-container{
+    text-align:center;
+    animation:fadeIn 1.2s ease;
+    display:none;
+    padding:20px;
+    width:100%;
+    max-width:500px;
+}
+
+@keyframes fadeIn{
+    from{opacity:0;transform:scale(.9)}
+    to{opacity:1;transform:scale(1)}
+}
+
+.portal-container h1{
+    font-size:clamp(22px,6vw,32px);
+    margin-bottom:10px;
+    letter-spacing:2px;
+}
+
+.portal-container p{
+    opacity:.8;
+    margin-bottom:30px;
+    font-size:clamp(14px,4vw,16px);
+}
+
+/* ===== BUTTONS ===== */
+.btn-group{
+    display:flex;
+    gap:clamp(15px,4vw,25px);
+    justify-content:center;
+    flex-wrap:wrap;
+}
+
+.btn{
+    padding:clamp(12px,3vw,15px) clamp(22px,6vw,30px);
+    font-size:clamp(14px,4vw,16px);
+    border-radius:40px;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
+    color:black;
+    transition:.4s;
+    min-width:160px;
+}
+
+.btn:hover{
+    transform:scale(1.1);
+}
+
+.trailer{
+    background:linear-gradient(135deg,#ff4d4d,#ff0000);
+}
+
+.flix{
+    background:linear-gradient(135deg,cyan,#00aaff);
+}
+
+/* ===== MOBILE EXTRA ===== */
+@media(max-width:480px){
+    .btn{
+        width:100%;
+        max-width:260px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- BACKSOUND -->
+<audio id="bgm" loop>
+    <source src="backsound.mp3" type="audio/mpeg">
+</audio>
+
+<!-- START SCREEN -->
+<div class="start-screen" onclick="startApp()">
+    <h1>CLICK TO ENTER</h1>
+</div>
+
+<!-- MAIN -->
+<div class="portal-container" id="portal">
+    <h1>WELCOME</h1>
+    <p>Choose your destination</p>
+
+    <div class="btn-group">
+        <button class="btn trailer" onclick="goPage('Humz trailer.html')">
+            🎬 HumzTrailer
+        </button>
+
+        <button class="btn flix" onclick="goPage('humzflix.html')">
+            🍿 HUMZFLIX
+        </button>
+    </div>
+</div>
+
+<script>
+const bgm=document.getElementById("bgm");
+bgm.volume=0.4;
+
+function startApp(){
+    bgm.play().catch(()=>{});
+    document.querySelector(".start-screen").style.display="none";
+    document.getElementById("portal").style.display="block";
+}
+
+function goPage(page){
+    document.body.style.opacity="0";
+    document.body.style.transform="scale(1.15)";
+    setTimeout(()=>{
+        window.location.href=page;
+    },600);
+}
+</script>
+
+</body>
+</html>

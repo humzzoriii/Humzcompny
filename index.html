@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humzcompny</title>
+
+<style>
+*{box-sizing:border-box}
+html,body{
+    width:100%;
+    height:100%;
+    margin:0;
+    font-family:Arial,sans-serif;
+}
+
+/* ===== BACKGROUND ===== */
+body{
+    background:
+      radial-gradient(circle at top, #1a0000, #000 60%),
+      linear-gradient(120deg, #000, #120000, #000);
+    background-size:200% 200%;
+    animation:bgMove 14s ease infinite;
+    color:white;
+}
+@keyframes bgMove{
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+/* ===== GLOBAL ===== */
+.center{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+}
+.box{
+    text-align:center;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(10px);
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 0 45px rgba(229,9,20,.6);
+}
+input{
+    width:260px;
+    padding:12px;
+    margin:8px 0;
+    border:none;
+    border-radius:10px;
+    text-align:center;
+    font-size:16px;
+}
+button{
+    margin-top:10px;
+    padding:12px 30px;
+    border:none;
+    border-radius:12px;
+    background:#e50914;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+button:hover{opacity:.85}
+
+.page{display:none}
+
+/* ===== NAVBAR ===== */
+.container-navbar{
+    backdrop-filter:blur(8px);
+    background:rgba(0,0,0,.45);
+    padding:10px 0;
+}
+.ul-navbar{
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    list-style:none;
+    padding:0;
+    margin:0;
+}
+.a-tulisan{
+    color:#fff;
+    text-decoration:none;
+    font-weight:bold;
+}
+.a-tulisan:hover{color:#e50914}
+
+/* ===== WELCOME ===== */
+.welcome{
+    text-align:center;
+    margin-top:40px;
+}
+.welcomec{
+    font-size:clamp(28px,6vw,48px);
+    text-shadow:0 0 25px rgba(229,9,20,.6);
+}
+.logout-btn{
+    margin-top:20px;
+}
+
+/* ===== CONTENT ===== */
+.container-content{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin:50px 0;
+}
+.img-content{
+    width:220px;
+    border-radius:18px;
+    box-shadow:0 0 40px rgba(229,9,20,.6);
+    cursor:pointer;
+    transition:.3s;
+}
+.img-content:hover{transform:scale(1.05)}
+.click-text{
+    margin-top:15px;
+    opacity:.8;
+    letter-spacing:1px;
+    font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ========== LOGIN PAGE ========== -->
+<div id="loginPage" class="page center">
+    <div class="box">
+        <h2>Login Admin</h2>
+        <input id="username" placeholder="username admin">
+        <input id="password" type="password" placeholder="password admin">
+        <button onclick="loginAdmin()">ENTER</button>
+
+        <hr style="margin:20px 0;border-color:#333">
+
+        <button onclick="loginUser()">SKIP (User)</button>
+
+        <div id="error" style="color:#ff6b6b;display:none;margin-top:10px">
+            username / password salah
+        </div>
+    </div>
+</div>
+
+<!-- ========== MAIN PAGE ========== -->
+<div id="mainPage" class="page">
+
+    <div class="container-navbar">
+        <ul class="ul-navbar">
+            <li><a class="a-tulisan" href="#">Home</a></li>
+            <li><a class="a-tulisan" href="#">Tiktok</a></li>
+            <li><a class="a-tulisan" href="#">Instagram</a></li>
+        </ul>
+    </div>
+
+    <div class="welcome">
+        <h1 class="welcomec" id="welcomeText"></h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container-content">
+        <img src="humz.jpg" class="img-content" onclick="goBlank()">
+        <div class="click-text">Click image to continue</div>
+    </div>
+
+</div>
+
+<script>
+/* ===== ADMIN USERS ===== */
+const admins = {
+    "Humam": "mnbvcxz",
+};
+
+const loginPage = document.getElementById("loginPage");
+const mainPage  = document.getElementById("mainPage");
+
+function show(page){
+    loginPage.style.display="none";
+    mainPage.style.display="none";
+    page.style.display = page===mainPage ? "block" : "flex";
+}
+
+/* ===== ADMIN LOGIN ===== */
+function loginAdmin(){
+    const u = username.value.trim();
+    const p = password.value.trim();
+
+    if(admins[u] && admins[u] === p){
+        localStorage.setItem("humz_login","true");
+        localStorage.setItem("humz_user",u);
+        localStorage.setItem("humz_role","admin");
+        loadMain();
+    }else{
+        error.style.display="block";
+    }
+}
+
+/* ===== USER SKIP ===== */
+function loginUser(){
+    localStorage.setItem("humz_login","true");
+    localStorage.setItem("humz_user","Guest");
+    localStorage.setItem("humz_role","user");
+    loadMain();
+}
+
+/* ===== MAIN ===== */
+function loadMain(){
+    show(mainPage);
+    const user = localStorage.getItem("humz_user");
+
+    const text = `Welcome, ${user} 👋`;
+    let i=0;
+    welcomeText.innerHTML="";
+    (function type(){
+        if(i<text.length){
+            welcomeText.innerHTML+=text[i++];
+            setTimeout(type,70);
+        }
+    })();
+}
+
+/* ===== IMAGE CLICK ===== */
+function goBlank(){
+    window.location.href = "blank.html";
+}
+
+/* ===== LOGOUT ===== */
+function logout(){
+    localStorage.clear();
+    show(loginPage);
+}
+
+/* ===== INIT ===== */
+if(localStorage.getItem("humz_login")==="true"){
+    loadMain();
+}else{
+    show(loginPage);
+}
+</script>
+
+</body>
+</html>
